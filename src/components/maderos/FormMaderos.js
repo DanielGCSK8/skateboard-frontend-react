@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as MaderoController from "./maderosController";
 import Swal from 'sweetalert2';
 import { validateForm } from './validateForm';
+import { Modal } from "react-bootstrap";
 
-const FormMaderos = () => {
+const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
     const [formData, setFormData] = useState({
         name: '',
-        description: null,
+        description: '',
         price: '',
         image: null,
     });
@@ -39,11 +40,21 @@ const FormMaderos = () => {
         let messageError = validateForm(formData);
         if (messageError.status === 'success') {
             try {
-                await MaderoController.formMaderos(formData);
-                Swal.fire({
-                    title: "Madero guardado exitosamente",
-                    icon: "success"
-                });
+                if (madero) {
+                    await MaderoController.updateMaderos(formData, madero.id);
+                    Swal.fire({
+                        title: "Madero actualizado exitosamente",
+                        icon: "success"
+                    });
+                } else {
+                    await MaderoController.formMaderos(formData);
+                    Swal.fire({
+                        title: "Madero guardado exitosamente",
+                        icon: "success"
+                    });
+                }
+
+                handleCloseModal();
                 setFormData({
                     name: "",
                     description: "",
@@ -53,7 +64,7 @@ const FormMaderos = () => {
                 if (imageInputRef.current) {
                     imageInputRef.current.value = null;
                 }
-            
+                fetchData();
             } catch (error) {
                 Swal.fire({
                     title: "Error",
@@ -67,40 +78,71 @@ const FormMaderos = () => {
         }
     }
 
+    useEffect(() => {
+        if (madero) {
+            setFormData({
+                name: madero.name,
+                description: madero.description,
+                price: madero.price,
+                image: madero.image || null, // Asumimos que no queremos mostrar la imagen actual en el input file
+            });
+        } else {
+            setFormData({
+                name: '',
+                description: '',
+                price: '',
+                image: null,
+            });
+        }
+    }, [madero]);
+
     return (
-        <div className='p-5'>
-            <form onSubmit={handleSubmit}>
-                <div className="row w-100">
-                    <div className="col-12 col-md-6 mb-4">
-                        <div className="form-group">
-                            <label className="text-muted">Nombre</label>
-                            <input className="form-control" name="name" type="text" value={formData.name} onChange={handleChangeInput} />
-                            {['validateName', 'lengthName'].includes(codeErrorMessage.message) ? (
-                                <span className='text-danger'>{dataTitles[codeErrorMessage.message]}</span>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label className="text-muted mt-3">Imagen</label>
-                            <input className="form-control" name="image" type="file" accept=".png, .jpeg, .jpg" onChange={handleChangeInput} ref={imageInputRef}/>
-                        </div>
-                    </div>
-                    <div className="col-12 col-md-6 mb-4">
-                        <div className="form-group">
-                            <label className="text-muted">Precio</label>
-                            <input className="form-control" name="price" type="text" value={formData.price} onChange={handleChangeInput} />
-                            {['validatePrice', 'numericPrice'].includes(codeErrorMessage.message) ? (
-                                <span className='text-danger'>{dataTitles[codeErrorMessage.message]}</span>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label className="text-muted mt-3">Descripción</label>
-                            <textarea className="form-control" name="description" rows="3" value={formData.description} onChange={handleChangeInput}></textarea>
-                        </div>
-                    </div>
+        <Modal show={showModal} onHide={handleCloseModal} className='modal-lg'>
+            <Modal.Body>
+                <div className='d-flex justify-content-end'>
+                    <a type="button" onClick={handleCloseModal}><i className="fa-solid fa-xmark"></i></a>
                 </div>
-                <button type="submit" className='btn btn-primary'>Añadir madero</button>
-            </form>
-        </div>
+                <div className='p-5'>
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="row w-100">
+                            <div className="col-12 col-md-6 mb-4">
+                                <div className="form-group">
+                                    <label className="text-muted">Nombre</label>
+                                    <input className="form-control" name="name" type="text" value={formData.name} onChange={handleChangeInput} />
+                                    {['validateName', 'lengthName'].includes(codeErrorMessage.message) ? (
+                                        <span className='text-danger'>{dataTitles[codeErrorMessage.message]}</span>
+                                    ) : null}
+                                </div>
+                                <div className="form-group">
+                                    <label className="text-muted mt-3">Imagen</label>
+                                    {formData.image ? (
+                                        <img src={formData.image} className="img-fluid mb-3" />
+                                    ) : (
+                                        <p>No hay imagen seleccionada</p>
+                                    )}
+                                    <input className="form-control" name="image" type="file" accept=".png, .jpeg, .jpg" onChange={handleChangeInput} ref={imageInputRef} />
+                                </div>
+                            </div>
+                            <div className="col-12 col-md-6 mb-4">
+                                <div className="form-group">
+                                    <label className="text-muted">Precio</label>
+                                    <input className="form-control" name="price" type="text" value={formData.price} onChange={handleChangeInput} />
+                                    {['validatePrice', 'numericPrice'].includes(codeErrorMessage.message) ? (
+                                        <span className='text-danger'>{dataTitles[codeErrorMessage.message]}</span>
+                                    ) : null}
+                                </div>
+                                <div className="form-group">
+                                    <label className="text-muted mt-3">Descripción</label>
+                                    <textarea className="form-control" name="description" rows="3" value={formData.description} onChange={handleChangeInput}></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" className='btn btn-primary'>{madero ? "Actualizar Madero" : "Añadir Madero"}</button>
+                    </form>
+                </div>
+            </Modal.Body>
+        </Modal>
     );
 }
 

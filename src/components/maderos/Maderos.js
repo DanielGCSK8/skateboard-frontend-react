@@ -40,7 +40,7 @@ const Maderos = () => {
             cancelButtonColor: "#d33",
             confirmButtonText: "Sí",
             cancelButtonText: "Cancelar"
-          }).then(async (result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     await MaderoController.deleteMadero(madero.id);
@@ -49,7 +49,7 @@ const Maderos = () => {
                         title: "¡Eliminado!",
                         text: "Madero eliminado exitosamente.",
                         icon: "success"
-                      });
+                    });
                 } catch (error) {
                     Swal.fire({
                         title: "Error",
@@ -58,13 +58,42 @@ const Maderos = () => {
                     });
                 }
             }
-          });
+        });
     }
 
     const fetchData = async () => {
-        const getMadero = await MaderoController.getMaderos();
-        setMaderos(getMadero)
-    }
+        try {
+            const getMadero = await MaderoController.getMaderos();
+            // Fetch images for each madero
+            const maderosWithImages = await Promise.all(
+                getMadero.map(async (madero) => {
+                    try {
+                        const imageName = madero.image // Obtiene solo el nombre de la imagen
+                        const response = await MaderoController.getImageMaderos(imageName)
+
+                        // Convierte la respuesta a base64
+                        const reader = new FileReader();
+                        reader.readAsDataURL(response.data);
+                        return new Promise((resolve, reject) => {
+                            reader.onloadend = () => {
+                                const base64Image = reader.result;
+                                const imageUrl = base64Image;
+                                resolve({ ...madero, imageUrl });
+                            };
+                            reader.onerror = reject;
+                        });
+                    } catch (error) {
+                        console.error('Error fetching image:', error);
+                        return { ...madero, imageUrl: null };
+                    }
+                })
+            );
+
+            setMaderos(maderosWithImages);
+        } catch (error) {
+            console.error('Error fetching maderos:', error);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -101,12 +130,20 @@ const Maderos = () => {
         return (
             <div className="d-flex align-items-center">
                 <a type="button"><i className="fa-solid fa-pen-to-square" onClick={() => handleShowModal(rowData)}
-                     style={{ color: 'blue' }}></i></a>
+                    style={{ color: 'blue' }}></i></a>
                 <a type="button"><i className="fa-solid fa-trash ms-3" onClick={() => handleDeleteMadero(rowData)}
-                style={{ color: 'red' }}></i></a>
+                    style={{ color: 'red' }}></i></a>
             </div>
         );
     };
+
+    const images = (rowData) => {
+        return (
+            <div className='d-flex align-items-center'>
+                <img src={rowData.imageUrl} width='80px'></img>
+            </div>
+        )
+    }
 
     return (
         <div className='p-5 mt-4'>
@@ -115,6 +152,7 @@ const Maderos = () => {
                 showGridlines tableStyle={{ minWidth: '50rem' }} className="datatable-responsive">
                 <Column field="name" header="Nombre" sortable filter filterPlaceholder="Buscar por nombre" style={{ minWidth: '12rem' }}></Column>
                 <Column field="price" header="Precio" sortable filter filterPlaceholder="Buscar por precio" style={{ minWidth: '8rem' }} body={(rowData) => `$${rowData.price}`}></Column>
+                <Column field="image" header="Imágen" body={images}></Column>
                 <Column field="description" header="Descripción" sortable filter filterPlaceholder="Buscar por descripción" style={{ minWidth: '20rem' }}></Column>
                 <Column header="Acciones" body={actions} style={{ minWidth: '20rem' }}></Column>
             </DataTable>
@@ -122,29 +160,6 @@ const Maderos = () => {
 
             <FormMaderos showModal={showModalForm} handleCloseModal={handleCloseModal} fetchData={fetchData} madero={selectedMadero} />
         </div>
-
-
-
-
-
-
-
-        // <div className='p-5'>
-        //     <div className='row row-cols-1 row-cols-md-3 g-4'>
-        //         {maderos.map((madero, index) => (
-        //             <div key={index} className='col'>
-        //                 <div className='card mb-3'>
-        //                     <img src=""></img>
-        //                     <div class="card-body">
-        //                         <h5 class="card-title">{madero.name}</h5>
-        //                         <p class="card-text">${madero.price}</p>
-        //                         <p class="card-text">{madero.description}</p>
-        //                     </div>
-        //                 </div>
-        //             </div>
-        //         ))}
-        //     </div>
-        // </div>
     );
 }
 

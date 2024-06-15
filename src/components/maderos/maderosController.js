@@ -39,3 +39,10 @@ export const getMaderoById = async (id) => {
 export const deleteMadero = async (id) => {
     return await axios.delete(urlApi + '/' + id);
 }
+
+export const getImageMaderos = async (image) => {
+    return await axios.get(`http://localhost:3001/images/${image}`, {
+        responseType: 'blob' // Establece el tipo de respuesta como blob
+    });
+
+} 

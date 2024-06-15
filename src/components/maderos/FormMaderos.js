@@ -10,6 +10,7 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
         description: '',
         price: '',
         image: null,
+        imageFile: null,
     });
 
     const imageInputRef = useRef(null);
@@ -18,12 +19,20 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
 
     const handleChangeInput = (e) => {
         const { name, value, files } = e.target;
-        const file = name == 'image' ? files[0] : value;
-        setFormData((prevFormData) => ({
-            ...prevFormData,
-            [name]: file,
-        }));
-        setCodeErrorMessage({})
+        if (name === 'image') {
+            const file = files[0];
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                imageFile: file,
+                image: URL.createObjectURL(file), // Para mostrar la imagen seleccionada en el formulario
+            }));
+        } else {
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                [name]: value,
+            }));
+        }
+        setCodeErrorMessage({});
     };
 
     const dataTitles = {
@@ -34,20 +43,28 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
         numericPrice: 'El precio debe ser un número válido.'
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         let messageError = validateForm(formData);
         if (messageError.status === 'success') {
             try {
+                const payload = new FormData();
+                payload.append('name', formData.name);
+                payload.append('description', formData.description);
+                payload.append('price', formData.price);
+
+                if (formData.imageFile) {
+                    payload.append('image', formData.imageFile);
+                }
+
                 if (madero) {
-                    await MaderoController.updateMaderos(formData, madero.id);
+                    await MaderoController.updateMaderos(payload, madero.id);
                     Swal.fire({
                         title: "Madero actualizado exitosamente",
                         icon: "success"
                     });
                 } else {
-                    await MaderoController.formMaderos(formData);
+                    await MaderoController.formMaderos(payload);
                     Swal.fire({
                         title: "Madero guardado exitosamente",
                         icon: "success"
@@ -60,6 +77,7 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
                     description: "",
                     price: "",
                     image: null,
+                    imageFile: null,
                 });
                 if (imageInputRef.current) {
                     imageInputRef.current.value = null;
@@ -76,7 +94,7 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
         } else {
             setCodeErrorMessage(messageError);
         }
-    }
+    };
 
     useEffect(() => {
         if (madero) {
@@ -84,7 +102,8 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
                 name: madero.name,
                 description: madero.description,
                 price: madero.price,
-                image: madero.image || null, // Asumimos que no queremos mostrar la imagen actual en el input file
+                image: madero.imageUrl || null,
+                imageFile: null,
             });
         } else {
             setFormData({
@@ -92,6 +111,7 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
                 description: '',
                 price: '',
                 image: null,
+                imageFile: null,
             });
         }
     }, [madero]);
@@ -103,7 +123,6 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
                     <a type="button" onClick={handleCloseModal}><i className="fa-solid fa-xmark"></i></a>
                 </div>
                 <div className='p-5'>
-
                     <form onSubmit={handleSubmit}>
                         <div className="row w-100">
                             <div className="col-12 col-md-6 mb-4">
@@ -117,7 +136,7 @@ const FormMaderos = ({ showModal, handleCloseModal, fetchData, madero }) => {
                                 <div className="form-group">
                                     <label className="text-muted mt-3">Imagen</label>
                                     {formData.image ? (
-                                        <img src={formData.image} className="img-fluid mb-3" />
+                                        <img src={formData.image} className="img-fluid mb-3 d-flex justify-content-end mt-4" width='80px' alt="Madero"/>
                                     ) : (
                                         <p>No hay imagen seleccionada</p>
                                     )}

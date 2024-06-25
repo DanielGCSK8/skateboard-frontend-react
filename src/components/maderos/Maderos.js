@@ -22,7 +22,7 @@ const Maderos = () => {
     const [showModalForm, setShowModalForm] = useState(false);
     const [selectedMadero, setSelectedMadero] = useState(null);
 
-    const handleShowModal = (madero = null) => {
+    const handleShowModal = (madero) => {
         setSelectedMadero(madero);
         setShowModalForm(true);
     };
@@ -148,7 +148,7 @@ const Maderos = () => {
     return (
         <div className='p-5 mt-4'>
 
-            <DataTable value={maderos} paginator rows={10} globalFilter={globalFilter} filters={filters} header={header}
+            <DataTable value={maderos} paginator rows={4} globalFilter={globalFilter} filters={filters} header={header}
                 showGridlines tableStyle={{ minWidth: '50rem' }} className="datatable-responsive">
                 <Column field="name" header="Nombre" sortable filter filterPlaceholder="Buscar por nombre" style={{ minWidth: '12rem' }}></Column>
                 <Column field="price" header="Precio" sortable filter filterPlaceholder="Buscar por precio" style={{ minWidth: '8rem' }} body={(rowData) => `$${rowData.price}`}></Column>
@@ -156,7 +156,11 @@ const Maderos = () => {
                 <Column field="description" header="Descripción" sortable filter filterPlaceholder="Buscar por descripción" style={{ minWidth: '20rem' }}></Column>
                 <Column header="Acciones" body={actions} style={{ minWidth: '20rem' }}></Column>
             </DataTable>
-            <button className='btn btn-secondary mt-4' onClick={() => handleShowModal(null)} >Crear Madero</button>
+            <div className='mt-4'>
+                <button className='btn btn-success' onClick={() => handleShowModal(null)} ><span className='fw-bold'>Crear Madero</span></button>
+                <a type='button' className='btn btn-primary ms-3' href='/'><span className='fw-bold'>Volver</span></a>
+            </div>
+
 
             <FormMaderos showModal={showModalForm} handleCloseModal={handleCloseModal} fetchData={fetchData} madero={selectedMadero} />
         </div>

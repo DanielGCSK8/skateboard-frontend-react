@@ -3,6 +3,17 @@ import * as MaderoController from '../maderos/maderosController';
 
 const Home = () => {
     const [maderos, setMaderos] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+
+    const handleChange = async (event) => {
+        const value = event.target.value;
+        setSearchTerm(value);
+        const filteredMaderos = maderos.filter(madero =>
+            madero.name.toLowerCase().includes(value.toLowerCase())
+        );
+        setSearchResults(filteredMaderos);
+    };
 
     const fetchData = async () => {
         try {
@@ -32,6 +43,7 @@ const Home = () => {
                 })
             );
             setMaderos(maderosWithImages);
+            setSearchResults(maderosWithImages);
         } catch (error) {
             console.error('Error fetching maderos:', error);
         }
@@ -43,8 +55,16 @@ const Home = () => {
 
     return (
         <div className='p-5'>
-            <div className='row row-cols-1 row-cols-md-3 g-4'>
-                {maderos.map((madero, index) => (
+            <div className='d-flex justify-content-end'>
+                <input
+                    type="text"
+                    placeholder="Buscar madero..."
+                    value={searchTerm}
+                    onChange={handleChange}
+                />
+            </div>
+            <div className='row row-cols-1 row-cols-md-3 g-4 mt-3'>
+                {searchResults.map((madero, index) => (
                     <div key={index} className='col'>
                         <div className='card mb-3'>
                             <img src={madero.imageUrl} alt={madero.name}></img>

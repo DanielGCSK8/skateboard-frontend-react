@@ -63,6 +63,7 @@ const Home = () => {
                     onChange={handleChange}
                 />
             </div>
+            
             <div className='row row-cols-1 row-cols-md-3 g-4 mt-3'>
                 {searchResults.map((madero, index) => (
                     <div key={index} className='col'>
